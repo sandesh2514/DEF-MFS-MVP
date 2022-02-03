@@ -5,6 +5,20 @@ The main purpose of the project is giving advise to the clients regarding the ch
 
 For this project we are using
 
+• Data collection (using Yahoo Finance APIs)
+
+• Stores it on databases or Data Sources #(relational, or no relational databases, or even object storage options such ASW S3 or BigQuery, a serverless, cost-effective and multicloud data warehouse)
+
+• Load the data from the database or data source.
+
+• Data Manipulation (dealing with missing values, errors in data, anomalies, etc.)
+
+• Applying Data exploration techniques.
+
+• Visualizes the data and providing AI/ML or Statistical analysis.
+
+• Web application to find top market moving stocks.
+
 TRELLO :- Task Management System :- Trello is the visual work management tool that empowers teams to ideate, plan, manage, and celebrate their work together in a collaborative, productive, and organized way.
 
 GITHUB :- Source Code Management System.
