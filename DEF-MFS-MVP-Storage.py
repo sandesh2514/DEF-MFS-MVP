@@ -13,31 +13,39 @@ try:
 except Exception as e:
     print("Error : {} ".format(e))
 
-PATH = os.path.join(os.getcwd() , 'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = PATH
+class Storage:
 
-# Create a Client Object
-storage_client = storage.Client(PATH)
+    def upload_to_bucket(self, blob_name, path_to_file):
+        """ Upload data to a bucket"""
 
-# Pushing a file on GCP bucket
+        # Explicitly use service account credentials by specifying the private key
+        # file.
+        storage_client = storage.Client.from_service_account_json(
+            'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
+
+        bucket = storage_client.get_bucket('bucket_stock')
+        blob = bucket.blob(files)
+        blob.upload_from_filename(UPLOADFILE)
+
+        # Getting all files from GCP bucket
+        filename = [filename.name for filename in list(bucket.list_blobs(prefix=''))]
+
+        # Reading a CSV file directly from GCP bucket
+        for file in filename:
+            df = pd.read_csv(
+                io.BytesIO(
+                    bucket.blob(blob_name = file).download_as_string()
+                    ),
+                    encoding = 'UTF-8',
+                    sep = ',',
+                    index_col=None
+                )
+            print(df.head())
+
+        #returns a public url
+        return blob.public_url
+
 for files in glob.glob("*.csv"):
     UPLOADFILE = os.path.join(os.getcwd(), files)
-    bucket = storage_client.get_bucket('bucket_stock')
-    blob = bucket.blob(files)
-    blob.upload_from_filename(UPLOADFILE)
-
-# Getting all files from GCP bucket
-bucket = storage_client.get_bucket('bucket_stock')
-filename = [filename.name for filename in list(bucket.list_blobs(prefix=''))]
-
-# Reading a CSV file directly from GCP bucket
-for file in filename:
-    df = pd.read_csv(
-        io.BytesIO(
-            bucket.blob(blob_name = file).download_as_string()
-            ),
-            encoding = 'UTF-8',
-            sep = ',',
-            index_col=None
-        )
-    print(df.head())
+    store = Storage()
+    store.upload_to_bucket(files, UPLOADFILE)
