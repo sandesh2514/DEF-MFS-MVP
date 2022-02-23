@@ -13,20 +13,23 @@ try:
 except Exception as e:
     print("Error : {} ".format(e))
 
-class Storage:
-
-    def upload_to_bucket(self, blob_name, path_to_file):
-        """ Upload data to a bucket"""
-
-        # Explicitly use service account credentials by specifying the private key
-        # file.
-        storage_client = storage.Client.from_service_account_json(
+storage_client = storage.Client.from_service_account_json(
             'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
 
-        bucket = storage_client.get_bucket('bucket_stock')
-        blob = bucket.blob(files)
-        blob.upload_from_filename(UPLOADFILE)
+bucket = storage_client.get_bucket('bucket_stock')
 
+class Storage:
+
+    def __init__(self, files, UPLOADFILE):
+        self.files=files
+        self.UPLOADFILE=UPLOADFILE
+
+    def upload_to_bucket(self):
+        """ Upload data to a bucket"""
+        blob = bucket.blob(self.files)
+        blob.upload_from_filename(self.UPLOADFILE)
+
+    def read_data(self):
         # Getting all files from GCP bucket
         filename = [filename.name for filename in list(bucket.list_blobs(prefix=''))]
 
@@ -42,10 +45,8 @@ class Storage:
                 )
             print(df.head())
 
-        #returns a public url
-        return blob.public_url
-
 for files in glob.glob("*.csv"):
     UPLOADFILE = os.path.join(os.getcwd(), files)
-    store = Storage()
-    store.upload_to_bucket(files, UPLOADFILE)
+    store = Storage(files, UPLOADFILE)
+    store.upload_to_bucket()
+    store.read_data()
