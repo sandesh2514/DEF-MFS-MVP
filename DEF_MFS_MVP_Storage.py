@@ -17,6 +17,7 @@ storage_client = storage.Client.from_service_account_json(
             'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
 
 bucket = storage_client.get_bucket('bucket_stock')
+df_list = []
 
 class Storage:
 
@@ -35,18 +36,20 @@ class Storage:
 
         # Reading a CSV file directly from GCP bucket
         for file in filename:
-            df = pd.read_csv(
+            df_list.append(pd.read_csv(
                 io.BytesIO(
                     bucket.blob(blob_name = file).download_as_string()
                     ),
                     encoding = 'UTF-8',
                     sep = ',',
                     index_col=None
-                )
-            print(df.head())
+                ))
 
 for files in glob.glob("*.csv"):
     UPLOADFILE = os.path.join(os.getcwd(), files)
     store = Storage(files, UPLOADFILE)
     store.upload_to_bucket()
     store.read_data()
+
+concatenated_df = pd.concat(df_list, ignore_index=True)
+print(concatenated_df)
