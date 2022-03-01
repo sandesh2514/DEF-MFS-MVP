@@ -7,7 +7,6 @@ class Statistical_Analysis:
         df = pd.concat(df_list)
         print("Shape:\n",df.shape)
         print("Statistical Characteristics:\n",df.describe())
-        print("Column Info:\n",df.info())
 
 stat_analy = Statistical_Analysis()
 stat_analy.statistical_characteristics()
