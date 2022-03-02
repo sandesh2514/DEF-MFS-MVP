@@ -43,15 +43,31 @@ class IntVisual:
 
     def dash_board(self):
         concatenated_df = pd.concat(df_list, ignore_index=True)
-        fig =px.line(concatenated_df, x="Date", y="Volume", title="Stock of Tesla")
-        app.title="Stock Prices"
+        fig =px.line(concatenated_df,
+                     x="Date",
+                     y=["Volume"],
+                     title="Stock Prices between Jan-01-2021 to Dec-31-2021",
+                     color_discrete_map={"Tesla":"red"}
+                     )
+
+        fig.update_layout(
+            template="plotly_dark",
+            # xaxis_title="Date",
+            # yaxix_title="Price",
+            font=dict(
+                family="Verdana, sans-serif",
+                size=18,
+                color="white"
+            )
+        )
 
         app.layout = html.Div(
             id="app-container",
             children=[
-                html.H1("Stock of Tesla"),
+                html.H1("Stocks of Four Companies"),
                 html.P("Results in USD/oz"),
-                dcc.Graph(figure=fig)
+                dcc.Graph(figure=fig),
+                # html.title="Stock Prices between Jan-01-2021 to Dec-31-2021"
             ]
         )
 
