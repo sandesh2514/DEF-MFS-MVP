@@ -1,5 +1,3 @@
-
-
 try:
     # pip install --upgrade google-api-python-client
     # pip install --upgrade google-cloud-storage
@@ -61,8 +59,7 @@ class IntVisual:
             "width": "16rem",
             "padding": "2rem 1rem",
             "background-color": "#f8f9fa",
-            "text-align":"center",
-            "box-shadow": "1px 5px 10px #888888",
+            "box-shadow": "1px 5px 10px  hsl(0deg 0% 0% / 0.38)",
         }
 
         # padding for the page content
@@ -110,17 +107,37 @@ class IntVisual:
                     dbc.Row(
                         [
                             dbc.Col(
-                                html.Img(src='data:image/jpg;base64,{}'.format(encoded_image.decode()), height="120px"))
+                                html.Img(src='data:image/jpg;base64,{}'.format(encoded_image.decode()), height="140px",
+                                         style={"padding-left":"35px"}))
                         ],
 
                     )
                 ),
                 html.Hr(),
+
+
+
+                html.Li(
+                    # use Row and Col components to position the chevrons
+                    dbc.Row(
+                        [
+                            dbc.Col("Dashboard"),
+                            dbc.Col(
+                                html.I(className="fa fa-dashboard mr-1")
+                            ),
+                        ],
+                        className="my-1",
+                    ),
+                    id="submenu-1",
+                ),
+
+
+
                 dbc.Nav(
                     [
-                        dbc.NavLink("Dashboard", href="/", active="exact", className="fa fa-dashboard"),
-                        dbc.NavLink("Analytics", href="/analytics", active="exact", className="fa fa-line-chart"),
-                        dbc.NavLink("Comparison", href="/comparison", active="exact", className="fa fa-exchange"),
+                        dbc.NavLink(" Dashboard", href="/", active="exact", className="fa fa-dashboard"),
+                        dbc.NavLink(" Analytics", href="/analytics", active="exact", className="fa fa-line-chart"),
+                        dbc.NavLink(" Comparison", href="/comparison", active="exact", className="fa fa-exchange"),
                     ],
                     vertical=True,
                     pills=True,
