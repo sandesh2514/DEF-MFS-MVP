@@ -121,26 +121,30 @@ class IntVisual:
                     # use Row and Col components to position the chevrons
                     dbc.Row(
                         [
-                            dbc.Col("Dashboard"),
                             dbc.Col(
-                                html.I(className="fa fa-dashboard mr-1")
+                                dbc.NavLink(className="fa fa-dashboard sm-1")
                             ),
+                            dbc.Col("Dashboard"),
                         ],
-                        className="my-1",
+                        className="mb-1",
+
                     ),
                     id="submenu-1",
+
                 ),
 
 
 
                 dbc.Nav(
                     [
-                        dbc.NavLink(" Dashboard", href="/", active="exact", className="fa fa-dashboard"),
+
+                        dbc.NavLink(" Dashboard",href="/", active="exact", className="fa fa-dashboard"),
                         dbc.NavLink(" Analytics", href="/analytics", active="exact", className="fa fa-line-chart"),
                         dbc.NavLink(" Comparison", href="/comparison", active="exact", className="fa fa-exchange"),
                     ],
                     vertical=True,
                     pills=True,
+                    className="ml-2"
                 ),
             ],
             style=SIDEBAR_STYLE,
