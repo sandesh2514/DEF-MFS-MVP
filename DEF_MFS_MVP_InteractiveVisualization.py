@@ -13,6 +13,8 @@ try:
     from dash import dcc
     import dash_bootstrap_components as dbc
     import plotly.express as px
+    import urllib.request, json
+    import plotly.graph_objects as go
     from dash.dependencies import Input, Output
     import base64
 except Exception as e:
@@ -28,8 +30,16 @@ df_list = []
 external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, external_stylesheets])
 
-image_filename = 'stock_logo.jpg' # replace with your own image
+image_filename = 'stock_logo.jpg'  # replace with your own image
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+image_filename1 = 'tesla.png'  # replace with your own image
+encoded_image1 = base64.b64encode(open(image_filename1, 'rb').read())
+
+resp = urllib.request.urlopen('https://query2.finance.yahoo.com/v10/finance/quoteSummary/tsla?modules=price')
+data = json.loads(resp.read())
+price = data['quoteSummary']['result'][0]['price']['regularMarketPrice']['raw']
+print(price)
 
 class IntVisual:
 
@@ -108,14 +118,12 @@ class IntVisual:
                         [
                             dbc.Col(
                                 html.Img(src='data:image/jpg;base64,{}'.format(encoded_image.decode()), height="140px",
-                                         style={"padding-left":"35px"}))
+                                         style={"padding-left": "35px"}))
                         ],
 
                     )
                 ),
                 html.Hr(),
-
-
 
                 html.Li(
                     # use Row and Col components to position the chevrons
@@ -133,18 +141,15 @@ class IntVisual:
 
                 ),
 
-
-
                 dbc.Nav(
                     [
-
-                        dbc.NavLink(" Dashboard",href="/", active="exact", className="fa fa-dashboard"),
+                        dbc.NavLink(" Dashboard", href="/", active="exact", className="fa fa-dashboard"),
                         dbc.NavLink(" Analytics", href="/analytics", active="exact", className="fa fa-line-chart"),
                         dbc.NavLink(" Comparison", href="/comparison", active="exact", className="fa fa-exchange"),
                     ],
                     vertical=True,
                     pills=True,
-                    className="ml-2"
+                    className="mr-2"
                 ),
             ],
             style=SIDEBAR_STYLE,
@@ -163,17 +168,76 @@ class IntVisual:
         Output("page-content", "children"),
         [Input("url", "pathname")]
     )
+
     def render_page_content(pathname):
         concatenated_df = pd.concat(df_list, ignore_index=True)
+
+        from datetime import date, timedelta
+        import pandas_datareader.data as web
+
+        start = date.today()-timedelta(days=1)
+        now = date.today()
+
+        df = web.DataReader("TSLA", 'yahoo', start, now)
 
         if pathname == "/":
             return [
                 html.H4('Dashboard',
                         style={'textAlign': 'left'}),
-                dcc.Graph(id='bargraph',
-                          figure=px.bar(concatenated_df, barmode='group', x='Date',
-                                        y=['Volume']))
+                dbc.Container([
+                    dbc.Row([
+                        dcc.Graph(id='indicator-graph',
+                                  figure=px.line(concatenated_df[concatenated_df['ticker'] == 'F'], x='Date',
+                                                 y=['Volume']),
+                                  style={"width": "600px", "height": "400px", "box-shadow": "0 6px 5px #aaaaaa"}),
+                        dbc.Col([
+                            dbc.CardImg(
+                                src='data:image/png;base64,{}'.format(encoded_image1.decode()),
+                                top=True,
+                                style={"width": "6rem"}
+                            ),
+                            dbc.Row([
+                                dbc.Label(id='high-price', children=now.strftime(" %Y-%m-%d"),
+                                          className="fa fa-calendar"),
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label(id='low-price', children="Open"),
+                                ]),
+                                dbc.Col([
+                                    dbc.Label(id='high-price', children="Low"),
+                                ])
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label(id='low-price', children=(round(df['Open'], 2))),
+                                ]),
+                                dbc.Col([
+                                    dbc.Label(id='high-price', children=(round(df['Low'], 2))),
+                                ])
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label(
+                                        id='low-price', children="Close"),
+                                ]),
+                                dbc.Col([
+                                    dbc.Label(id='high-price', children="High"),
+                                ])
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label(id='low-price', children=(round(df['Close'], 2))),
+                                ]),
+                                dbc.Col([
+                                    dbc.Label(id='high-price', children=(round(df['High'], 2))),
+                                ])
+                            ]),
+                        ]),
+                    ]),
+                ]),
             ]
+
         elif pathname == "/analytics":
             return [
                 html.H4('Analytics',
@@ -182,6 +246,7 @@ class IntVisual:
                           figure=px.bar(concatenated_df, barmode='group', x='Date',
                                         y=['Volume']))
             ]
+
         elif pathname == "/comparison":
             return [
                 html.H4('Comparison',
@@ -190,6 +255,7 @@ class IntVisual:
                           figure=px.bar(concatenated_df, barmode='group', x='Date',
                                         y=['Volume']))
             ]
+
         # If the user tries to reach a different page, return a 404 message
         return dbc.Jumbotron(
             [
@@ -198,6 +264,30 @@ class IntVisual:
                 html.P(f"The pathname {pathname} was not recognised..."),
             ]
         )
+
+    # Indicator Graph
+    # @app.callback(
+    #     Output('indicator-graph', 'figure'),
+    #     Input('update', 'n_intervals')
+    #     )
+    # def update_graph(timer):
+    #     dff_rv = dff.iloc[::-1]
+    #     day_start = dff_rv[dff_rv['date'] == dff_rv['date'].min()]['rate'].values[0]
+    #     day_end = dff_rv[dff_rv['date'] == dff_rv['date'].max()]['rate'].values[0]
+    #
+    #     fig = go.Figure(go.Indicator(
+    #         mode="delta",
+    #         value=day_end,
+    #         delta={'reference': day_start, 'relative': True, 'valueformat': '.2%'}))
+    #     fig.update_traces(delta_font={'size': 12})
+    #     fig.update_layout(height=30, width=70)
+    #
+    #     if day_end >= day_start:
+    #         fig.update_traces(delta_increasing_color='green')
+    #     elif day_end < day_start:
+    #         fig.update_traces(delta_decreasing_color='red')
+    #
+    #     return fig
 
 
 Visual = IntVisual()
