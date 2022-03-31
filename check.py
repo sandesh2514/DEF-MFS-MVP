@@ -105,7 +105,7 @@ class IntVisual:
                                     className="dropdown",
                                     options=[{"label": ticker, "value": ticker} for ticker in set(concatenated_df.ticker.values)],
                                     clearable=False,
-                                    value= 'AAPL'
+                                    value= 'TSLA'
                                 )
                             ]
                         ),

@@ -1,29 +1,52 @@
-import numpy as np
-import pandas_datareader.data as web
-import yfinance as yf
-# yf.pdr_override()
-from datetime import date, timedelta
-import pandas as pd
-import numpy as np
+import pandas as pd     #(version 1.0.0)
+import plotly           #(version 4.5.4) pip install plotly==4.5.4
+import plotly.express as px
 
-symbols = ['TSLA', 'F', 'AAPL', 'GOOG']
-start = date.today() - timedelta(days=31)
-now = date.today()
-stock=[]
-for symbol in symbols:
-    df_stock = yf.download(symbol, group_by="Ticker", start=start, end=now)
-    df_stock['Ticker'] = symbol
-    stock.append(pd.DataFrame(df_stock))
+import dash             #(version 1.9.1) pip install dash==1.9.1
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
+from dash import dcc
+import dash_bootstrap_components as dbc
 
-df=pd.concat(stock)
-df_tesla=(df[df['Ticker'] == 'TSLA'])
-df_ford=(df[df['Ticker'] == 'F'])
-df_apple=(df[df['Ticker'] == 'AAPL'])
-df_goog=(df[df['Ticker'] == 'GOOG'])
+app = dash.Dash(__name__)
 
-# print(df_tesla['Volume'].iloc[-1])
+#---------------------------------------------------------------
+#Taken from https://opendata.cityofnewyork.us/
+df = pd.read_csv("https://raw.githubusercontent.com/Coding-with-Adam/Dash-by-Plotly/master/Dash%20Components/Dropdown/Urban_Park_Ranger_Animal_Condition.csv")
 
-df_tesla=df_tesla.reset_index()
-print (df_tesla['Date'])
-# print(df_apple)
-# print(df_goog)
+app.layout = html.Div([
+
+    dbc.Nav(
+            [
+                            dcc.Dropdown(id='demo-dropdown',
+                                         options=[
+                                             {'label': 'TSLA', 'value': 'Tesla'},
+                                             {'label': 'F', 'value': 'ford'},
+                                         ],
+                                         ),
+                            dbc.NavLink(" Analytics", href="/analytics", active="exact", className="fa fa-line-chart"),
+                            dbc.NavLink(" Comparison", href="/comparison", active="exact", className="fa fa-exchange"),
+            ],
+            vertical=True,
+            pills=True,
+            className="mr-2"
+         ),
+        html.Div(id='dd-output-container')
+    ])
+
+@app.callback(
+    Output('dd-output-container', 'children'),
+    Input('demo-dropdown', 'value')
+)
+def update_output(value):
+    if value == 'Tesla':
+        return [html.H4('Tesla',
+                        style={'textAlign': 'left'})]
+
+    elif value == 'ford':
+        return [html.H4('Ford',
+                        style={'textAlign': 'left'})]
+
+if __name__ == '__main__':
+    app.run_server(debug=True, port=8052)
