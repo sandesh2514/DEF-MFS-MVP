@@ -10,6 +10,6 @@ class stocks:
             data['ticker'] = ticker  # add this column because the dataframe doesn't contain a column with the ticker
             data.to_csv(f'ticker_{ticker}.csv')  # ticker_F.csv for example
 
-tick = ['F',"TSLA", 'AAPL', 'GOOG']
+tick = ['F',"TSLA"]
 stock = stocks()
 stock.download(tick)
