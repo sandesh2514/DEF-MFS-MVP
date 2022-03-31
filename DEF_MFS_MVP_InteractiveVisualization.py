@@ -13,10 +13,12 @@ try:
     from dash import dcc
     import dash_bootstrap_components as dbc
     import plotly.express as px
-    import urllib.request, json
     import plotly.graph_objects as go
+    import urllib.request, json
     from dash.dependencies import Input, Output
     import base64
+    from datetime import date, timedelta
+    import yfinance as yf
 except Exception as e:
     print("Error : {} ".format(e))
 
@@ -27,19 +29,37 @@ bucket = storage_client.get_bucket('bucket_stock')
 
 df_list = []
 
+stylesheet = 'C:/Users/Raj/PycharmProjects/WIL/DEF-MFS-MVP/style.css'
 external_stylesheets = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, external_stylesheets])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, external_stylesheets],
+                assets_external_path=stylesheet)
 
-image_filename = 'stock_logo.jpg'  # replace with your own image
+image_filename = 'stock_logo.png'  # replace with your own image
 encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
 image_filename1 = 'tesla.png'  # replace with your own image
 encoded_image1 = base64.b64encode(open(image_filename1, 'rb').read())
 
-resp = urllib.request.urlopen('https://query2.finance.yahoo.com/v10/finance/quoteSummary/tsla?modules=price')
-data = json.loads(resp.read())
-price = data['quoteSummary']['result'][0]['price']['regularMarketPrice']['raw']
-print(price)
+start = date.today() - timedelta(days=1000)
+now = date.today()
+
+symbols = ['TSLA', 'F', 'AAPL', 'GOOG']
+stock=[]
+for symbol in symbols:
+    df_stock = yf.download(symbol, group_by="Ticker", start=start, end=now)
+    df_stock['Ticker'] = symbol
+    stock.append(pd.DataFrame(df_stock))
+
+df=pd.concat(stock)
+df_tesla=(df[df['Ticker'] == 'TSLA'])
+df_tesla=df_tesla.reset_index()
+df_ford=(df[df['Ticker'] == 'F'])
+df_ford=df_ford.reset_index()
+df_apple=(df[df['Ticker'] == 'AAPL'])
+df_apple=df_apple.reset_index()
+df_goog=(df[df['Ticker'] == 'GOOG'])
+df_goog=df_goog.reset_index()
+
 
 class IntVisual:
 
@@ -60,6 +80,8 @@ class IntVisual:
 
     def dash_board(self):
 
+        concatenated_df = pd.concat(df_list, ignore_index=True)
+
         # styling the sidebar
         SIDEBAR_STYLE = {
             "position": "fixed",
@@ -68,8 +90,7 @@ class IntVisual:
             "bottom": 0,
             "width": "16rem",
             "padding": "2rem 1rem",
-            "background-color": "#f8f9fa",
-            "box-shadow": "1px 5px 10px  hsl(0deg 0% 0% / 0.38)",
+            "box-shadow": "1px 5px 10px rgba(1, 1, 1, 1)",
         }
 
         # padding for the page content
@@ -77,38 +98,12 @@ class IntVisual:
             "margin-left": "18rem",
             "margin-right": "2rem",
             "padding": "2rem 1rem",
-            "color": "grey"
+            "color": "grey",
         }
 
-        # NAVBAR_STYLE={
-        #     "box-shadow": "5px 10px 8px #888888",
-        #     "width": 1600,
-        #     "left": 0,
-        #     "position": "fixed",
-        #     "margin - top": "-20px",
-        #     "height": "40px",
-        #     "background - color":  "# 668284",
-        # }
-
-        concatenated_df = pd.concat(df_list, ignore_index=True)
-
-        # navbar = dbc.NavbarSimple(
-        #     children=[
-        #         html.A(
-        #             # Use row and col to control vertical alignment of logo / brand
-        #             dbc.Row(
-        #                 [
-        #                     dbc.Col(html.Img(src='data:image/jpg;base64,{}'.format(encoded_image.decode()), height="60px")),
-        #                     dbc.Col(dbc.NavbarBrand("Navbar", className="ms-2")),
-        #                 ],
-        #
-        #             ),
-        #             style=NAVBAR_STYLE,
-        #         ),
-        #     ],
-        #     brand_href="#",
-        #     color="Light",
-        # )
+        whole_page = {
+            "background-color": "#192444"
+        }
 
         sidebar = html.Div(
             [
@@ -123,23 +118,7 @@ class IntVisual:
 
                     )
                 ),
-                html.Hr(),
-
-                html.Li(
-                    # use Row and Col components to position the chevrons
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                dbc.NavLink(className="fa fa-dashboard sm-1")
-                            ),
-                            dbc.Col("Dashboard"),
-                        ],
-                        className="mb-1",
-
-                    ),
-                    id="submenu-1",
-
-                ),
+                html.Hr(style={"color": "grey"}),
 
                 dbc.Nav(
                     [
@@ -158,84 +137,308 @@ class IntVisual:
         content = html.Div(id="page-content", children=[], style=CONTENT_STYLE)
 
         app.layout = html.Div([
+            html.Link(
+                rel='stylesheet',
+                href='style.css'
+            ),
             dcc.Location(id="url"),
-            # navbar,
             sidebar,
             content
-        ])
+        ],
+            style=whole_page
+        )
 
     @app.callback(
         Output("page-content", "children"),
         [Input("url", "pathname")]
     )
-
     def render_page_content(pathname):
+
         concatenated_df = pd.concat(df_list, ignore_index=True)
-
-        from datetime import date, timedelta
-        import pandas_datareader.data as web
-
-        start = date.today()-timedelta(days=1)
-        now = date.today()
-
-        df = web.DataReader("TSLA", 'yahoo', start, now)
+        fig=px.line(df, x = df["Volume"], y = df["High"], title = 'Thailand Covid-19 New Cases')
 
         if pathname == "/":
             return [
                 html.H4('Dashboard',
-                        style={'textAlign': 'left'}),
+                        style={'textAlign': 'center'}),
                 dbc.Container([
                     dbc.Row([
-                        dcc.Graph(id='indicator-graph',
-                                  figure=px.line(concatenated_df[concatenated_df['ticker'] == 'F'], x='Date',
-                                                 y=['Volume']),
-                                  style={"width": "600px", "height": "400px", "box-shadow": "0 6px 5px #aaaaaa"}),
-                        dbc.Col([
-                            dbc.CardImg(
-                                src='data:image/png;base64,{}'.format(encoded_image1.decode()),
-                                top=True,
-                                style={"width": "6rem"}
+                        html.Div([
+                            html.Div([
+                                dbc.CardImg(
+                                    src='data:image/png;base64,{}'.format(encoded_image1.decode()),
+                                    top=True,
+                                    style={"width": "6rem"}
+                                    ),
+                                html.H6(children=now.strftime(" %Y-%m-%d"),
+                                        className="fa fa-calendar",
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        )], className='col s12 m6',
+                                           style= {
+                                                'border-radius': 5,
+                                                'background - color': '# 1f2c56',
+                                                'margin': 15,
+                                                'position': 'relative',
+                                                'box-shadow': '2px 2px 2px #1f2c56',
+                                                'textAlign': 'center',
+                                                'padding': 5,
+                                           }
                             ),
-                            dbc.Row([
-                                dbc.Label(id='high-price', children=now.strftime(" %Y-%m-%d"),
-                                          className="fa fa-calendar"),
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label(id='low-price', children="Open"),
-                                ]),
-                                dbc.Col([
-                                    dbc.Label(id='high-price', children="Low"),
-                                ])
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label(id='low-price', children=(round(df['Open'], 2))),
-                                ]),
-                                dbc.Col([
-                                    dbc.Label(id='high-price', children=(round(df['Low'], 2))),
-                                ])
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label(
-                                        id='low-price', children="Close"),
-                                ]),
-                                dbc.Col([
-                                    dbc.Label(id='high-price', children="High"),
-                                ])
-                            ]),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label(id='low-price', children=(round(df['Close'], 2))),
-                                ]),
-                                dbc.Col([
-                                    dbc.Label(id='high-price', children=(round(df['High'], 2))),
-                                ])
-                            ]),
-                        ]),
+
+                            html.Div([
+                                html.H6(children='Open',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        ),
+                                html.P(f"{df_tesla['Open'].iloc[-1]:,.2f}",
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'orange',
+                                           'fontsize': 40}
+                                       ),
+                                html.P('new: ' + f"{df_tesla['Open'].iloc[-1] - df_tesla['Open'].iloc[-2]:,.2f} "
+                                       + ' (' + str(round(((df_tesla['Open'].iloc[-1] - df_tesla['Open'].iloc[-2]) /
+                                                           df_tesla['Open'].iloc[-1]) * 100, 2)) + '%)',
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'orange',
+                                           'fontsize': 15,
+                                           'margin-top': '-18px'}
+                                       )], className='col s12 m6',
+                                style={
+                                    'border-radius': 5,
+                                    'background - color': '# 1f2c56',
+                                    'margin': 15,
+                                    'padding': 5,
+                                    'position': 'relative',
+                                    'box-shadow': '2px 2px 2px #1f2c56',
+                                }
+                            ),
+
+                            html.Div([
+                                html.H6(children='Close',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        ),
+                                html.P(f"{df_tesla['Close'].iloc[-1]:,.2f}",
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': '#e55467',
+                                           'fontsize': 40}
+                                       ),
+                                html.P('new: ' + f"{df_tesla['Close'].iloc[-1] - df_tesla['Close'].iloc[-2]:,.2f} "
+                                       + ' (' + str(round(((df_tesla['Close'].iloc[-1] - df_tesla['Close'].iloc[-2]) /
+                                                           df_tesla['Close'].iloc[-1]) * 100, 2)) + '%)',
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': '#e55467',
+                                           'fontsize': 15,
+                                           'margin-top': '-18px'}
+                                       )],className='col s12 m6',
+                                           style={
+                                            'border-radius': 5,
+                                            'background - color': '# 1f2c56',
+                                            'margin': 15,
+                                            'padding': 5,
+                                            'position': 'relative',
+                                            'box-shadow': '2px 2px 2px #1f2c56',
+                                           }
+                            ),
+
+                            html.Div([
+                                html.H6(children='High',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        ),
+                                html.P(f"{df_tesla['High'].iloc[-1]:,.2f}",
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'green',
+                                           'fontsize': 40}
+                                       ),
+                                html.P('new: ' + f"{df_tesla['High'].iloc[-1] - df_tesla['High'].iloc[-2]:,.2f} "
+                                       + ' (' + str(round(((df_tesla['High'].iloc[-1] - df_tesla['High'].iloc[-2]) /
+                                                           df_tesla['High'].iloc[-1]) * 100, 2)) + '%)',
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'green',
+                                           'fontsize': 15,
+                                           'margin-top': '-18px'}
+                                       )], className='col s12 m6',
+                                style={
+                                    'border-radius': 5,
+                                    'background - color': '# 1f2c56',
+                                    'margin': 15,
+                                    'padding': 5,
+                                    'position': 'relative',
+                                    'box-shadow': '2px 2px 2px #1f2c56',
+                                }
+                            ),
+
+                            html.Div([
+                                html.H6(children='Low',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        ),
+                                html.P(f"{df_tesla['Low'].iloc[-1]:,.2f}",
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'red',
+                                           'fontsize': 40}
+                                       ),
+                                html.P('new: ' + f"{df_tesla['Low'].iloc[-1] - df_tesla['Low'].iloc[-2]:,.2f} "
+                                       + ' (' + str(round(((df_tesla['Low'].iloc[-1] - df_tesla['Low'].iloc[-2]) /
+                                                           df_tesla['Low'].iloc[-1]) * 100, 2)) + '%)',
+                                       style={
+                                           'textAlign': 'center',
+                                           'color': 'red',
+                                           'fontsize': 15,
+                                           'margin-top': '-18px'}
+                                       )], className='col s8 m4',
+                                           style={
+                                                    'border-radius': 5,
+                                                    'background - color': '# 1f2c56',
+                                                    'margin': 15,
+                                                    'padding': 5,
+                                                    'position': 'relative',
+                                                    'box-shadow': '2px 2px 2px #1f2c56',
+                                }
+                            ),
+
+                        ],className='row',
+                       ),
                     ]),
-                ]),
+
+                    dbc.Row([
+                        html.Div([
+
+                            html.Div([
+                                    html.H6(children='Stocks Volume',
+                                            style={
+                                                'textAlign': 'center',
+                                                'color': 'white'}
+                                    ),
+
+                                    html.Div([
+                                        dcc.Graph(figure={
+                                                      'data':[{ 'labels':['TESLA', 'FORD', 'APPLE', 'GOOGLE'],
+                                                                'values': [df_tesla['Volume'].iloc[-1],
+                                                                          df_ford['Volume'].iloc[-1],
+                                                                          df_apple['Volume'].iloc[-1],
+                                                                          df_goog['Volume'].iloc[-1]],
+                                                               'type': 'pie',
+                                                               'hole': .4,
+                                                               'hoverinfo': "label+percent+name",
+                                                               'rotation':45,
+                                                               }],
+                                                      'layout': {
+                                                                  'plot_bgcolor': '#1f2c56',
+                                                                  'paper_bgcolor': '#1f2c56',
+                                                                  'font': {
+                                                                          'color': 'white'
+                                                                  },
+                                                                }
+                                                  },)
+                                    ])
+
+                            ],className='col s12 m6',
+                                style={
+                                    'border-radius': 5,
+                                    'background-color': '#1f2c56',
+                                    'margin': 5,
+                                    'padding': 5,
+                                    'position': 'relative',
+                                    'box-shadow': '2px 2px 2px #1f2c56',
+                                },
+                            ),
+
+                            html.Div([
+                                html.H6(children='Stocks Price One Month',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white'}
+                                        ),
+
+                                html.Div([
+                                    html.Div([
+                                        dcc.Dropdown(
+                                            # id="ticker-filter",
+                                            className="dropdown",
+                                            options=[{"label": ticker, "value": ticker} for ticker in
+                                                     set(concatenated_df.ticker.values)],
+                                            clearable=False,
+                                            value='TSLA'
+                                        ),
+                                    ], className='col s16 m6'),
+
+                                    html.Div([
+                                        dcc.DatePickerRange(
+                                                            # id="date-range",
+                                                            min_date_allowed=df_tesla.Date.min().date(),
+                                                            max_date_allowed=df_tesla.Date.max().date(),
+                                                            start_date=df_tesla.Date.min().date(),
+                                                            end_date=df_tesla.Date.max().date()
+                                        ),
+                                    ],className='col s16 m6'),
+                                ],className='row'),
+
+                                html.Div([
+                                    dcc.Graph(
+                                              figure={
+                                                      'data':[{'x': df_tesla['Date'],
+                                                               'y':df_tesla['Open'],
+                                                               'type': 'bar',
+                                                               'marker': dict(color='orange'),
+                                                               }],
+                                                      'layout': {
+                                                                  'plot_bgcolor': '#1f2c56',
+                                                                  'paper_bgcolor': '#1f2c56',
+                                                                  'font': {
+                                                                          'color': 'white'
+                                                                  },
+
+                                                                  'xaxis':dict(color='white',
+                                                                               showline=True,
+                                                                               showgrid=True,
+                                                                               showticketlabels=True,
+                                                                               linecolor='white',
+                                                                               linewidth=2,
+                                                                               ),
+
+                                                                  'yaxis': dict(color='white',
+                                                                                showline=True,
+                                                                                showgrid=True,
+                                                                                showticketlabels=True,
+                                                                                linecolor='white',
+                                                                                linewidth=2,
+                                                                                )
+                                                                }
+                                                     }
+                                              )
+                                ]),
+
+                            ],className='col s16 m12',
+                                style={
+                                    'border-radius': 5,
+                                    'background-color': '#1f2c56',
+                                    'margin': 0,
+                                    'padding': 0,
+                                    'position': 'relative',
+                                    'box-shadow': '2px 2px 2px #1f2c56',
+                                    'max-width': '70%',
+                                }
+                            ),
+
+                        ],className='row',
+                        )
+                    ]),
+                ])
             ]
 
         elif pathname == "/analytics":
@@ -266,28 +469,69 @@ class IntVisual:
         )
 
     # Indicator Graph
+
     # @app.callback(
-    #     Output('indicator-graph', 'figure'),
-    #     Input('update', 'n_intervals')
+    #     Output("price-chart", "figure"),
+    #     Input("ticker-filter", "value"),
+    #     Input("date-range", "start_date"),
+    #     Input("date-range", "end_date")
+    # )
+    # def update_chart(ticker, start_date, end_date):
+    #     tick = df_tesla[df_tesla.Ticker.isin([ticker])]
+    #     filtered_data = tick.loc[(tick.Date >= start_date) & (tick.Date <= end_date)]
+    #     # Create a plotly plot for use by dcc.Graph().
+    #     fig = px.line(
+    #         filtered_data,
+    #         id='price-chart',
+    #         title="Stock Prices in 2021",
+    #         x='Date',
+    #         y="Open",
+    #         color_discrete_map={
+    #             "TSLA": "#E5E4E2",
+    #             "GOOG": "gold",
+    #             "F": "silver",
+    #             "AAPL": "#CED0DD"
+    #         }
     #     )
-    # def update_graph(timer):
-    #     dff_rv = dff.iloc[::-1]
-    #     day_start = dff_rv[dff_rv['date'] == dff_rv['date'].min()]['rate'].values[0]
-    #     day_end = dff_rv[dff_rv['date'] == dff_rv['date'].max()]['rate'].values[0]
     #
-    #     fig = go.Figure(go.Indicator(
-    #         mode="delta",
-    #         value=day_end,
-    #         delta={'reference': day_start, 'relative': True, 'valueformat': '.2%'}))
-    #     fig.update_traces(delta_font={'size': 12})
-    #     fig.update_layout(height=30, width=70)
-    #
-    #     if day_end >= day_start:
-    #         fig.update_traces(delta_increasing_color='green')
-    #     elif day_end < day_start:
-    #         fig.update_traces(delta_decreasing_color='red')
+    #     fig.update_layout(
+    #         template="plotly_dark",
+    #         xaxis_title="Date",
+    #         yaxis_title="Price (USD/oz)",
+    #         font=dict(
+    #             family="Verdana, sans-serif",
+    #             size=18,
+    #             color="white"
+    #         ),
+    #     )
     #
     #     return fig
+
+    # def update_graph(ticker-filter):
+
+        # stock_data = df.groupby(['Date'])[['Open', 'Close', 'High', 'Low']].sum().reset_index()
+        #
+        # value_open = stock_data[stock_data['Open']== s_companies]['Open'].iloc[-1] - stock_data[stock_data['Open']== s_companies]['Open'].iloc[-2]
+        # delta_open = stock_data[stock_data['Open']== s_companies]['Open'].iloc[-2] - stock_data[stock_data['Open']== s_companies]['Open'].iloc[-3]
+
+
+
+    # {
+        #         'data': {}
+        #         ,
+        #
+        #         'layout': go.Layout(
+        #             title={'text': 'Open',
+        #                    'y': 1,
+        #                    'x': 0.5,
+        #                    'xanchor': 'center',
+        #                    'yanchor': 'top'},
+        #             font=dict(color='orange'),
+        #             paper_bgcolor='#1f2c56',
+        #             plot_bgcolor='#1f2c56',
+        #             height=50
+        #         ),
+        # }
 
 
 Visual = IntVisual()
