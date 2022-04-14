@@ -1,4 +1,3 @@
-from pandas_datareader import data as pdr
 import yfinance as yf
 yf.pdr_override() # <== that's all it takes :-)
 

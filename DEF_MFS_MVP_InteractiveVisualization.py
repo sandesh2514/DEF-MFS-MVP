@@ -1,34 +1,17 @@
-import dash_table
-
-try:
-    # pip install --upgrade google-api-python-client
-    # pip install --upgrade google-cloud-storage
-    from google.cloud import storage
-    import os
-    import sys
-    import glob
-    import pandas as pd
-    import io
-    from io import BytesIO
-    import dash
-    from dash import html
-    from dash import dcc
-    import dash_bootstrap_components as dbc
-    import plotly.express as px
-    import plotly.graph_objects as go
-    import urllib.request, json
-    from dash.dependencies import Input, Output
-    from datetime import date, timedelta
-    import yfinance as yf
-    from prophet import Prophet
-    from prophet.plot import plot_plotly, plot_components_plotly
-    from tesla import tesla_pred
-    from ford import ford_pred
-    from tesla_comparison import tesla_rolling_50
-    from ford_comparison import ford_rolling_50
-
-except Exception as e:
-    print("Error : {} ".format(e))
+from google.cloud import storage
+import pandas as pd
+import io
+import dash
+from dash import html
+from dash import dcc
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
+from datetime import date, timedelta
+import yfinance as yf
+from tesla import tesla_pred
+from ford import ford_pred
+from tesla_comparison import tesla_rolling_50
+from ford_comparison import ford_rolling_50
 
 storage_client = storage.Client.from_service_account_json(
     'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
@@ -732,22 +715,17 @@ class IntVisual:
     )
     def update_output(value):
 
-        if value=='TESLA':
+        if value == 'TESLA':
             return [html.H4('Tesla Data',
                                 style={'textAlign': 'center'}),
-                    dcc.Graph(
-                        figure=tesla_rolling_50()
-
-                    )
+                    dcc.Graph(figure=tesla_rolling_50())
 
             ]
 
-        elif value=='FORD':
+        elif value == 'FORD':
             return [html.H4('Ford Data',
                                 style={'textAlign': 'center'}),
-                    dcc.Graph(
-                        figure=ford_rolling_50()
-                    )
+                    dcc.Graph(figure=ford_rolling_50())
 
             ]
 
@@ -757,16 +735,14 @@ class IntVisual:
     )
     def update_output(value):
 
-        if value=='TESLA':
+        if value == 'TESLA':
             return [html.H4('Tesla Data',
                                 style={'textAlign': 'center'}),
                     dbc.Container([
                         dbc.Row([
                             html.Div([
 
-                                dcc.Graph(figure=tesla_pred(),
-
-                                          )
+                                dcc.Graph(figure=tesla_pred())
 
                             ], style={
                                     'border-radius': 5,
@@ -781,18 +757,13 @@ class IntVisual:
                     ])
             ]
 
-
-
-        elif value=='FORD':
+        elif value == 'FORD':
             return [html.H4('Ford Data',
                                 style={'textAlign': 'center'}),
                     dbc.Container([
                         dbc.Row([
                             html.Div([
-
-                                dcc.Graph(figure=ford_pred(),
-
-                                          )
+                                dcc.Graph(figure=ford_pred())
 
                             ], style={
                                 'border-radius': 5,
