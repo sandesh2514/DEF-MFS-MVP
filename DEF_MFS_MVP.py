@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 from pandas_datareader import data as pdr
+=======
+>>>>>>> IntVisual
 import yfinance as yf
 yf.pdr_override() # <== that's all it takes :-)
 

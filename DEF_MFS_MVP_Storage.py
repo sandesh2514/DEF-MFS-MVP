@@ -16,7 +16,11 @@ except Exception as e:
 storage_client = storage.Client.from_service_account_json(
             'C:\\Users\\Raj\\PycharmProjects\\Sensitive_Info\\DEF-MFS-MVP-Configuration.json')
 
+<<<<<<< HEAD
 bucket = storage_client.get_bucket('bucket_stock')
+=======
+bucket = storage_client.get_bucket('bucket_stock2')
+>>>>>>> IntVisual
 df_list = []
 
 class Storage:
@@ -52,4 +56,7 @@ for files in glob.glob("*.csv"):
     store.read_data()
 
 concatenated_df = pd.concat(df_list, ignore_index=True)
+<<<<<<< HEAD
 print(concatenated_df)
+=======
+>>>>>>> IntVisual
